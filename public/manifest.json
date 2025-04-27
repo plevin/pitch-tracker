@@ -1,0 +1,38 @@
+{
+  "short_name": "PitchTracker",
+  "name": "Baseball Pitch Tracker",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0f52ba",
+  "background_color": "#ffffff",
+  "orientation": "portrait",
+  "description": "Track baseball pitches and analyze patterns",
+  "categories": ["sports", "utilities", "baseball"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "New Game",
+      "short_name": "New Game",
+      "description": "Start tracking a new game",
+      "url": "/game",
+      "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
+    }
+  ]
+}
