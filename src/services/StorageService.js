@@ -1,132 +1,201 @@
-// src/services/StorageService.js
-import Dexie from 'dexie';
+// Using localStorage for now, but this could be upgraded to IndexedDB or a backend API
+// Simple wrapper for localStorage with utility functions for our app
 
-// Initialize the database
-const db = new Dexie('baseballPitchTracker');
+import { createGame, validateGame } from '../models/Game';
+import { createPitcher, validatePitcher } from '../models/Pitcher';
+import { createPitch, validatePitch } from '../models/Pitch';
 
-// Define database schema
-db.version(1).stores({
-  games: '++id, date, opponent, location',
-  pitchers: '++id, name, number, team',
-  pitches: '++id, pitcherId, gameId, inning, count, pitchType, result, batterSide, timestamp'
-});
-
-// Game-related functions
-export const saveGame = async (game) => {
-  // Add timestamp if not present
-  if (!game.date) {
-    game.date = new Date().toISOString();
-  }
-  
+// Game functions
+export const saveGame = (gameData) => {
   try {
-    const id = await db.games.add(game);
-    return { ...game, id };
+    // Create and validate game object
+    const game = createGame(gameData);
+    if (!validateGame(game)) {
+      throw new Error('Invalid game data');
+    }
+    
+    // Get existing games
+    const games = getGames();
+    
+    // Generate a unique ID for the new game if not provided
+    if (!game.id) {
+      game.id = Date.now().toString();
+    }
+    
+    // Check if game with this ID already exists
+    const existingIndex = games.findIndex(g => g.id === game.id);
+    
+    if (existingIndex >= 0) {
+      // Update existing game
+      games[existingIndex] = game;
+    } else {
+      // Add new game
+      games.push(game);
+    }
+    
+    // Save the updated list
+    localStorage.setItem('baseballGames', JSON.stringify(games));
+    
+    return game;
   } catch (error) {
     console.error('Error saving game:', error);
     throw error;
   }
 };
 
-export const getGames = async () => {
+export const getGames = () => {
   try {
-    return await db.games.toArray();
+    const gamesJSON = localStorage.getItem('baseballGames');
+    return gamesJSON ? JSON.parse(gamesJSON) : [];
   } catch (error) {
-    console.error('Error fetching games:', error);
+    console.error('Error getting games:', error);
     return [];
   }
 };
 
-export const getGameById = async (id) => {
+export const getGameById = (id) => {
   try {
-    return await db.games.get(id);
+    const games = getGames();
+    return games.find(game => game.id === id) || null;
   } catch (error) {
-    console.error(`Error fetching game ${id}:`, error);
+    console.error(`Error getting game with id ${id}:`, error);
     return null;
   }
 };
 
-// Pitcher-related functions
-export const savePitcher = async (pitcher) => {
+// Pitcher functions
+export const savePitcher = (pitcherData) => {
   try {
-    const id = await db.pitchers.add(pitcher);
-    return { ...pitcher, id };
+    // Create and validate pitcher object
+    const pitcher = createPitcher(pitcherData);
+    if (!validatePitcher(pitcher)) {
+      throw new Error('Invalid pitcher data');
+    }
+    
+    // Get existing pitchers
+    const pitchers = getPitchers();
+    
+    // Generate a unique ID for the new pitcher if not provided
+    if (!pitcher.id) {
+      pitcher.id = Date.now().toString();
+    }
+    
+    // Check if pitcher with this ID already exists
+    const existingIndex = pitchers.findIndex(p => p.id === pitcher.id);
+    
+    if (existingIndex >= 0) {
+      // Update existing pitcher
+      pitchers[existingIndex] = pitcher;
+    } else {
+      // Add new pitcher
+      pitchers.push(pitcher);
+    }
+    
+    // Save the updated list
+    localStorage.setItem('baseballPitchers', JSON.stringify(pitchers));
+    
+    return pitcher;
   } catch (error) {
     console.error('Error saving pitcher:', error);
     throw error;
   }
 };
 
-export const getPitchers = async (team = null) => {
+export const getPitchers = () => {
   try {
-    if (team) {
-      return await db.pitchers.where('team').equals(team).toArray();
-    }
-    return await db.pitchers.toArray();
+    const pitchersJSON = localStorage.getItem('baseballPitchers');
+    return pitchersJSON ? JSON.parse(pitchersJSON) : [];
   } catch (error) {
-    console.error('Error fetching pitchers:', error);
+    console.error('Error getting pitchers:', error);
     return [];
   }
 };
 
-export const getPitcherById = async (id) => {
+export const getPitcherById = (id) => {
   try {
-    return await db.pitchers.get(id);
+    const pitchers = getPitchers();
+    return pitchers.find(pitcher => pitcher.id === id) || null;
   } catch (error) {
-    console.error(`Error fetching pitcher ${id}:`, error);
+    console.error(`Error getting pitcher with id ${id}:`, error);
     return null;
   }
 };
 
-// Pitch-related functions
-export const savePitch = async (pitch) => {
-  // Add timestamp
-  pitch.timestamp = new Date().toISOString();
-  
+// Pitch functions
+export const savePitch = (pitchData) => {
   try {
-    const id = await db.pitches.add(pitch);
-    return { ...pitch, id };
+    // Create and validate pitch object
+    const pitch = createPitch(pitchData);
+    if (!validatePitch(pitch)) {
+      throw new Error('Invalid pitch data');
+    }
+    
+    // Get existing pitches
+    const pitches = getPitches();
+    
+    // Generate a unique ID for the new pitch if not provided
+    if (!pitch.id) {
+      pitch.id = Date.now().toString();
+    }
+    
+    // Check if pitch with this ID already exists
+    const existingIndex = pitches.findIndex(p => p.id === pitch.id);
+    
+    if (existingIndex >= 0) {
+      // Update existing pitch
+      pitches[existingIndex] = pitch;
+    } else {
+      // Add new pitch
+      pitches.push(pitch);
+    }
+    
+    // Save the updated list
+    localStorage.setItem('baseballPitches', JSON.stringify(pitches));
+    
+    return pitch;
   } catch (error) {
     console.error('Error saving pitch:', error);
     throw error;
   }
 };
 
-export const getPitchesByPitcher = async (pitcherId, gameId = null) => {
+export const getPitches = () => {
   try {
-    if (gameId) {
-      return await db.pitches
-        .where({ pitcherId, gameId })
-        .sortBy('timestamp');
-    }
-    return await db.pitches
-      .where('pitcherId')
-      .equals(pitcherId)
-      .sortBy('timestamp');
+    const pitchesJSON = localStorage.getItem('baseballPitches');
+    return pitchesJSON ? JSON.parse(pitchesJSON) : [];
   } catch (error) {
-    console.error(`Error fetching pitches for pitcher ${pitcherId}:`, error);
+    console.error('Error getting pitches:', error);
     return [];
   }
 };
 
-export const getPitchesByGame = async (gameId) => {
+export const getPitchesByPitcher = (pitcherId) => {
   try {
-    return await db.pitches
-      .where('gameId')
-      .equals(gameId)
-      .sortBy('timestamp');
+    const pitches = getPitches();
+    return pitches.filter(pitch => pitch.pitcherId === pitcherId);
   } catch (error) {
-    console.error(`Error fetching pitches for game ${gameId}:`, error);
+    console.error(`Error getting pitches for pitcher ${pitcherId}:`, error);
     return [];
   }
 };
 
-// Export data functions
-export const exportData = async () => {
+export const getPitchesByGame = (gameId) => {
+  try {
+    const pitches = getPitches();
+    return pitches.filter(pitch => pitch.gameId === gameId);
+  } catch (error) {
+    console.error(`Error getting pitches for game ${gameId}:`, error);
+    return [];
+  }
+};
+
+// Export functions for data backup and restore
+export const exportAllData = () => {
   try {
     const data = {
-      games: await db.games.toArray(),
-      pitchers: await db.pitchers.toArray(),
-      pitches: await db.pitches.toArray(),
+      games: getGames(),
+      pitchers: getPitchers(),
+      pitches: getPitches(),
       exportDate: new Date().toISOString()
     };
     
@@ -137,28 +206,30 @@ export const exportData = async () => {
   }
 };
 
-// Import data function
-export const importData = async (data) => {
+export const importAllData = (data) => {
   try {
-    // Clear existing data
-    await db.games.clear();
-    await db.pitchers.clear();
-    await db.pitches.clear();
+    if (!data) throw new Error('No data provided');
     
-    // Import new data
-    if (data.games && data.games.length) {
-      await db.games.bulkAdd(data.games);
-    }
+    // Validate the data format
+    if (!data.games || !Array.isArray(data.games)) throw new Error('Invalid games data');
+    if (!data.pitchers || !Array.isArray(data.pitchers)) throw new Error('Invalid pitchers data');
+    if (!data.pitches || !Array.isArray(data.pitches)) throw new Error('Invalid pitches data');
     
-    if (data.pitchers && data.pitchers.length) {
-      await db.pitchers.bulkAdd(data.pitchers);
-    }
+    // Validate and clean up each entity
+    const games = data.games.filter(game => validateGame(createGame(game)));
+    const pitchers = data.pitchers.filter(pitcher => validatePitcher(createPitcher(pitcher)));
+    const pitches = data.pitches.filter(pitch => validatePitch(createPitch(pitch)));
     
-    if (data.pitches && data.pitches.length) {
-      await db.pitches.bulkAdd(data.pitches);
-    }
+    // Save the data
+    localStorage.setItem('baseballGames', JSON.stringify(games));
+    localStorage.setItem('baseballPitchers', JSON.stringify(pitchers));
+    localStorage.setItem('baseballPitches', JSON.stringify(pitches));
     
-    return true;
+    return {
+      gamesImported: games.length,
+      pitchersImported: pitchers.length,
+      pitchesImported: pitches.length
+    };
   } catch (error) {
     console.error('Error importing data:', error);
     throw error;
@@ -173,8 +244,9 @@ export default {
   getPitchers,
   getPitcherById,
   savePitch,
+  getPitches,
   getPitchesByPitcher,
   getPitchesByGame,
-  exportData,
-  importData
+  exportAllData,
+  importAllData
 };
