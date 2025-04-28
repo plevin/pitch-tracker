@@ -2,12 +2,25 @@
 /node_modules
 /.pnp
 .pnp.js
+node_modules
+dist
+dist-ssr
+*.local
 
 # Testing
 /coverage
 
 # Production
 /build
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
 # Misc
 .DS_Store
@@ -16,13 +29,10 @@
 .env.test.local
 .env.production.local
 
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
 # Editor directories and files
 .idea
-.vscode
+.vscode/*
+!.vscode/extensions.json
 *.suo
 *.ntvs*
 *.njsproj
